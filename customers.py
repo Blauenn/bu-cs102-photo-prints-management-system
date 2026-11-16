@@ -11,16 +11,19 @@ customers = []
 
 # Populate system data
 def update_customers_from_csv():
+    customers.clear()
+
     with open(customers_csv_location, "r", newline="", encoding="utf-8") as file:
         customers_csv = list(csv.reader(file))[1:]
 
     for row in customers_csv:
-        customers.append(row)
+        customer_to_append = [int(row[0]), row[1], row[2]]
+        customers.append(customer_to_append)
 
 update_system_from_csv(system)
 update_customers_from_csv()
 
-def find_customer(customer_id: int) -> list[str] | None:
+def find_customer(customer_id: int) -> list[str | int] | None:
     # Look through all row in customers
     for customer in customers:
         if int(customer[0]) == customer_id:
@@ -43,7 +46,12 @@ def add_customer(name: str, phone: str) -> str:
     customers.append([customer_id, name, phone])
 
     # Update the autoincrement value
-    system[0][1] = customer_id + 1
+    for row in system:
+        if row[0] == "customers":
+            customer_id = row[1]
+            row[1] += 1
+            break
+
     update_system(system)
 
     return(f"\n✅ Customer {customer_id} - {name} has been added.")
@@ -154,15 +162,15 @@ def manage_customers():
 
                 # Validate phone
                 while True:
-                    new_phone = input(f"Update customer phone [{old_phone}]: ") or old_phone
-
+                    new_phone = str(input(f"Update customer phone [{old_phone}]: ") or old_phone
+) 
                     if len(new_phone) == 10 and new_phone.isdigit():
                         break
                     else:
                         print("The phone number has be 10 digits in length.")
                         continue
 
-                result = update_customer(int(customer_id), new_name, new_phone)
+                result = update_customer(int(customer_id), str(new_name), str(new_phone))
                 print(result)
 
                 clear_console()
