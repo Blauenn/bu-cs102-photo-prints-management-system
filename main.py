@@ -1,4 +1,10 @@
-header_marker = "=" * 15
+from constants import header_marker
+from utils import clear_console
+
+from customers import manage_customers
+from photos import manage_photos
+from prints import manage_prints
+from deliveries import manage_deliveries
 
 while True:
     print(header_marker, "Photo Prints Management System", header_marker)
@@ -7,27 +13,27 @@ while True:
     print("3. Prints")
     print("4. Deliveries")
     print("5. Exit program")
-    
-    try:
-        menu = int(input("\nSelect a menu (1-5): "))
-    except ValueError:
-        print("Please enter a number.")
-        continue
+
+    menu = input("\nSelect a menu (1-5): ")
 
     # Valid menu
-    if not 1 <= menu <= 5:
-        print("Please select a number between 1 and 5.")
+    if menu == "1":
+        clear_console(True)
+        manage_customers()
+    elif menu == "2":
+        clear_console(True)
+        manage_photos()
+    elif menu == "3":
+        clear_console(True)
+        manage_prints()
+    elif menu == "4":
+        clear_console(True)
+        manage_deliveries()
+    elif menu == "5":
+        break
+    else:
+        print("Invalid input!")
         continue
 
-    if menu == 1:
-        print(header_marker, "Manage customers", header_marker)
-    elif menu == 2:
-        print(header_marker, "Manage photos", header_marker)
-    elif menu == 3:
-        print(header_marker, "Manage prints", header_marker)
-    elif menu == 4:
-        print(header_marker, "Manage deliveries", header_marker)
-    elif menu == 5:
-        break
-
+print("\n")
 print(header_marker, "Program exited", header_marker)
