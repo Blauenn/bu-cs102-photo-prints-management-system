@@ -33,6 +33,7 @@ while True:
         break
     else:
         print("Invalid input!")
+        clear_console()
         continue
 
 print("\n")
