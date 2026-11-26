@@ -1,4 +1,5 @@
 import csv
+from os.path import join
 
 from constants import header_marker, system_csv_location, customers_csv_location
 from utils import clear_console
@@ -32,6 +33,22 @@ def find_customer(customer_id: int) -> list[str | int] | None:
 
     # If customer is not found
     return None
+
+def get_customer_name(customer_id: int) -> str | None:
+    found_customer = find_customer(customer_id)
+
+    if found_customer:
+        return str(found_customer[1]) 
+
+    return None
+
+def get_customers_list() -> str:
+    return_list = []
+    for customer in customers:
+        customer_string = f"({customer[0]}) {customer[1]}"
+        return_list.append(customer_string)
+
+    return f"{", ".join(return_list)}\n" 
 
 def add_customer(name: str, phone: str) -> str:
     # autoincrement value of customers
@@ -93,114 +110,151 @@ def delete_customer(customer_id: int) -> str:
 
     return f"\n❌ Customer {customer_id} was not found."
 
-def manage_customers():
+def manage_customers() -> None:
     while True:
-        print(header_marker, "👤 Manage customers", header_marker)
-        print("1. View customers")
-        print("2. Add customer")
-        print("3. Update customer")
-        print("4. Delete customer")
-        print("5. Return")
+        try:
+            print(header_marker, "👤 Manage customers", header_marker)
+            print("1. View customers")
+            print("2. Add customer")
+            print("3. Update customer")
+            print("4. Delete customer")
+            print("5. Return")
 
-        menu = input("\nSelect a menu (1-5): ")
-        print("\n")
+            menu = input("\nSelect a menu (1-5): ")
+            print("\n")
 
-        # VIEW CUSTOMERS
-        if menu == "1":
-            print(header_marker, "📋 Customers list", header_marker)
-            print(f"{'ID':<4}{'Name':<20}{'Phone':<10}")
+            # VIEW CUSTOMERS
+            if menu == "1":
+                clear_console(True)
+                print(header_marker, "📋 Customers list", header_marker)
+                print(f"{'ID':<4}"
+                      f"{'Name':<20}"
+                      f"{'Phone':<10}"
+                      )
 
-            for customer in customers:
-                print(f"{customer[0]:<4}{customer[1]:<20}{customer[2]:<10}")
+                for customer in customers:
+                    customer_name = customer[1]
 
-            clear_console()
+                    if len(customer_name) > 17:
+                        customer_name = customer_name[:14] + "..."
 
-        # ADD CUSTOMER
-        elif menu == "2":
-            print(header_marker, "🟩 Add customer", header_marker)
-            customer_name = input("Customer name: ")
-            
-            # Validate phone
-            while True:
-                customer_phone = input("Phone number: ")
-                
-                if len(customer_phone) == 10 and customer_phone.isdigit():
-                    break
-                else:
-                    print("The phone number has be 10 digits in length.")
-                    continue
+                    print(f"{customer[0]:<4}"
+                          f"{customer_name:<20}"
+                          f"{customer[2]:<10}"
+                          )
 
-            result = add_customer(customer_name, customer_phone)
-            print(result)
-
-            clear_console()
-
-        # UPDATE CUSTOMER
-        elif menu == "3":
-            print(header_marker, "🟡 Update customer", header_marker)
-
-            # Validate ID
-            while True:
-                customer_id = input("Select a customer to update: ")
-                
-                if customer_id.isdigit():
-                    break
-                else:
-                    print("The ID must be a number.")
-                    continue
-
-            customer = find_customer(int(customer_id))
-
-            if customer is None:
-                print("\n❌ Customer not found.")
                 clear_console()
-            else:
-                old_name = customer[1]
-                old_phone = customer[2]
 
-                new_name = input(f"Update customer name [{old_name}]: ") or old_name
+            # ADD CUSTOMER
+            elif menu == "2":
+                clear_console(True)
+                print(header_marker, "🟩 Add customer", header_marker)
 
-                # Validate phone
+                # Validate name
                 while True:
-                    new_phone = str(input(f"Update customer phone [{old_phone}]: ") or old_phone
-) 
-                    if len(new_phone) == 10 and new_phone.isdigit():
+                    customer_name = input("Customer name: ").strip()
+
+                    if customer_name:
                         break
                     else:
-                        print("The phone number has be 10 digits in length.")
+                        print("Customer name cannot be empty.\n")
+                
+                # Validate phone
+                while True:
+                    customer_phone = input("Phone number: ")
+                    
+                    if len(customer_phone) == 10 and customer_phone.isdigit():
+                        break
+                    else:
+                        print("The phone number has be 10 digits in length.\n")
                         continue
 
-                result = update_customer(int(customer_id), str(new_name), str(new_phone))
+                result = add_customer(customer_name, customer_phone)
                 print(result)
 
                 clear_console()
 
-        # DELETE CUSTOMER
-        elif menu == "4":
-            print(header_marker, "🗑️ Delete customer", header_marker)
+            # UPDATE CUSTOMER
+            elif menu == "3":
+                clear_console(True)
+                print(header_marker, "🟡 Update customer", header_marker)
+                print(f"\n{get_customers_list()}")
 
-            # Validate ID
-            while True:
-                customer_id = input("Select a customer to delete: ")
+                # Validate ID
+                while True:
+                    customer_id = input("Select a customer to update (0 to cancel): ")
 
-                if customer_id.isdigit():
-                    break
+                    if customer_id == "0":
+                        raise(KeyboardInterrupt)
+                    
+                    if customer_id.isdigit():
+                        break
+                    else:
+                        print("The ID must be a number.\n")
+                        continue
+
+                customer = find_customer(int(customer_id))
+
+                if customer is None:
+                    print("\n❌ Customer not found.")
+                    clear_console()
                 else:
-                    print("The ID must be a number.")
-                    continue
+                    old_name = customer[1]
+                    old_phone = customer[2]
 
-            result = delete_customer(int(customer_id))
-            print(result)
+                    new_name = input(f"Update customer name [{old_name}]: ") or old_name
 
-            clear_console()
+                    # Validate phone
+                    while True:
+                        new_phone = str(input(f"Update customer phone [{old_phone}]: ") or old_phone
+) 
+                        if len(new_phone) == 10 and new_phone.isdigit():
+                            break
+                        else:
+                            print("The phone number has be 10 digits in length.\n")
+                            continue
 
-        # RETURN
-        elif menu == "5":
+                    result = update_customer(int(customer_id), str(new_name), str(new_phone))
+                    print(result)
+
+                    clear_console()
+
+            # DELETE CUSTOMER
+            elif menu == "4":
+                clear_console(True)
+                print(header_marker, "🗑️ Delete customer", header_marker)
+                print(f"\n{get_customers_list()}")
+
+                # Validate ID
+                while True:
+                    customer_id = input("Select a customer to delete (0 to cancel): ")
+
+                    if customer_id == "0":
+                        raise(KeyboardInterrupt)
+
+                    if customer_id.isdigit():
+                        break
+                    else:
+                        print("The ID must be a number.\n")
+                        continue
+
+                result = delete_customer(int(customer_id))
+                print(result)
+
+                clear_console()
+
+            # RETURN
+            elif menu == "5":
+                clear_console(True)
+                break
+
+            # INVALID MENU
+            else:
+                print("Invalid menu!")
+                clear_console()
+                continue
+
+        except KeyboardInterrupt:
+            print("\nOperation cancelled.")
             clear_console(True)
-            break
-
-        # INVALID MENU
-        else:
-            print("Invalid menu!")
-            clear_console()
             continue
