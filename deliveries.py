@@ -3,7 +3,7 @@ from datetime import date
 
 from constants import header_marker, system_csv_location, deliveries_csv_location
 from customers import get_customer_name
-from utils import clear_console
+from utils import clear_console, truncate_string
 
 from data_system import update_system, update_system_from_csv
 from prints import get_prints_list, prints, find_print
@@ -52,15 +52,13 @@ def get_deliveries_list() -> str:
                 customer_name = "DELETED CUSTOMER"
 
             print_string = f"({delivery[0]}) {print_amount} {print_size} for {customer_name}"
-
-            if len(print_string) > 30:
-                print_string = print_string[:26] + "..."
+            print_string = truncate_string(print_string, 30)
         else:
             print_string = f"({delivery[0]}) PRINT DELETED"
 
         return_list.append(print_string)
 
-    return f"{", ".join(return_list)}\n" 
+    return f"{" | ".join(return_list)}\n" 
 
 def save_deliveries() -> None:
     with open(deliveries_csv_location, "w", newline="", encoding="utf-8") as file:
@@ -77,11 +75,11 @@ def save_deliveries() -> None:
 
 def add_delivery(print_id: int, date_created: str) -> str:
     if find_print(print_id) is None:
-        return f"Print {print_id} was not found."
+        return f"❌ Print {print_id} was not found."
 
     for delivery in deliveries:
         if delivery[1] == print_id:
-            return f"Print {print_id} already has a delivery."
+            return f"❌ Print {print_id} already has a delivery."
 
     delivery_id = None
 
@@ -113,7 +111,7 @@ def add_delivery(print_id: int, date_created: str) -> str:
 
     update_system(system)
 
-    return f"Delivery {delivery_id} has been created."
+    return f"✅ Delivery {delivery_id} has been created."
 
 def update_delivery(
     delivery_id: int,
@@ -121,18 +119,17 @@ def update_delivery(
     date_created: str,
     date_delivered: str
 ) -> str:
-
     delivery = find_delivery(delivery_id)
 
     if delivery is None:
-        return f"Delivery {delivery_id} was not found."
+        return f"❌ Delivery {delivery_id} was not found."
 
     if find_print(print_id) is None:
-        return f"Print {print_id} was not found."
+        return f"❌ Print {print_id} was not found."
 
     for other_delivery in deliveries:
         if other_delivery[0] != delivery_id and other_delivery[1] == print_id:
-            return f"Print {print_id} already has a delivery."
+            return f"❌ Print {print_id} already has a delivery."
 
     delivery[1] = print_id
     delivery[2] = date_created
@@ -140,34 +137,35 @@ def update_delivery(
 
     save_deliveries()
 
-    return f"Delivery {delivery_id} has been updated."
+    return f"✅ Delivery {delivery_id} has been updated."
 
 def delete_delivery(delivery_id: int) -> str:
     delivery = find_delivery(delivery_id)
 
     if delivery is None:
-        return f"Delivery {delivery_id} was not found."
+        return f"❌ Delivery {delivery_id} was not found."
 
     deliveries.remove(delivery)
     save_deliveries()
 
-    return f"Delivery {delivery_id} has been deleted."
+    return f"✅ Delivery {delivery_id} has been deleted."
 
 def manage_deliveries() -> None:
     while True:
         try:
             print(header_marker, "🚚 Manage deliveries", header_marker)
-            print("1. View deliveries")
-            print("2. Add delivery")
-            print("3. Update delivery")
-            print("4. Delete delivery")
-            print("5. Return")
+            print("1. 📋 View deliveries")
+            print("2. 🟩 Add delivery")
+            print("3. 🟡 Update delivery")
+            print("4. 🗑️ Delete delivery")
+            print("5. ⏪ Return")
 
             menu = input("\nSelect a menu (1-5): ")
             print("\n")
 
             # VIEW DELIVERIES
             if menu == "1":
+                clear_console(True)
                 print(header_marker, "📋 Deliveries list", header_marker)
                 print(
                     f"{'ID':<6}"
@@ -189,8 +187,7 @@ def manage_deliveries() -> None:
                     else:
                         print_description = "DELETED PRINT"
 
-                    if len(print_description) > 20:
-                        print_description = print_description[:20] + "..."
+                    print_description = truncate_string(print_description, 20)
 
                     if delivery[3]:
                         delivered = delivery[3]
@@ -214,6 +211,7 @@ def manage_deliveries() -> None:
 
             # ADD DELIVERY
             elif menu == "2":
+                clear_console(True)
                 print(header_marker, "🟩 Add delivery", header_marker)
 
                 while True:
@@ -224,7 +222,7 @@ def manage_deliveries() -> None:
                     if print_id.isdigit() and find_print(int(print_id)) is not None:
                         break
                     else:
-                        print("Print not found. Enter an existing print ID.\n")
+                        print("❌ Print not found.\n")
 
                 todays_date = date.today().isoformat()
                 date_created = input(f"Date created [{todays_date}]: ") or todays_date 
@@ -241,7 +239,7 @@ def manage_deliveries() -> None:
                 print(f"{get_deliveries_list()}")
 
                 while True:
-                    delivery_id = input("Select a delivery to update: ")
+                    delivery_id = input("Select a delivery to update (0 to cancel): ")
 
                     if delivery_id == "0":
                         raise(KeyboardInterrupt)
@@ -249,7 +247,7 @@ def manage_deliveries() -> None:
                     if delivery_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.")
+                        print("❌ The ID must be a number.")
 
                 delivery = find_delivery(int(delivery_id))
 
@@ -270,7 +268,7 @@ def manage_deliveries() -> None:
                         if new_print_id.isdigit() and find_print(int(new_print_id)) is not None:
                             break
                         else:
-                            print("Print not found. Enter an existing print ID.")
+                            print("❌ Print not found.")
 
                     new_date_created = input(
                         f"Update creation date [{old_date_created}]: "
@@ -302,7 +300,7 @@ def manage_deliveries() -> None:
                 print(f"{get_deliveries_list()}")
 
                 while True:
-                    delivery_id = input("Select a delivery to delete: ")
+                    delivery_id = input("Select a delivery to delete (0 to cancel): ")
 
                     if delivery_id == "0":
                         raise(KeyboardInterrupt)
@@ -310,7 +308,7 @@ def manage_deliveries() -> None:
                     if delivery_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.")
+                        print("❌ The ID must be a number.")
 
                 result = delete_delivery(int(delivery_id))
 
@@ -324,7 +322,7 @@ def manage_deliveries() -> None:
 
             # INVALID MENU
             else:
-                print("Invalid menu!")
+                print("❌ Invalid menu!")
                 clear_console()
 
         except KeyboardInterrupt:

@@ -1,9 +1,9 @@
 import csv
 from datetime import date
 
-from constants import header_marker, system_csv_location, prints_csv_location
+from constants import header_marker, system_csv_location, prints_csv_location, paper_sizes, paper_types
 from photos import find_photo, get_photos_list
-from utils import clear_console
+from utils import clear_console, truncate_string
 from data_system import update_system, update_system_from_csv
 
 from customers import customers, find_customer, get_customer_name, get_customers_list
@@ -31,7 +31,6 @@ def update_prints_from_csv() -> None:
 
         prints.append(print_to_append)
 
-
 update_system_from_csv(system)
 update_prints_from_csv()
 
@@ -43,26 +42,23 @@ def find_print(prints_id: int) -> list[int | str] | None:
     return None
 
 def get_print_info_string(print_record: list[str]) -> str:
-        found_photo = find_photo(int(print_record[1]))
+    found_photo = find_photo(int(print_record[1]))
 
-        if found_photo:
-            description = str(found_photo[4]).strip()
+    if found_photo:
+        description = str(found_photo[4]).strip() or "Photo"
+    else:
+        description = "PHOTO NOT FOUND"
 
-            if not description:
-                description = "Photo"
-            
-            photo_string = description 
-        else:
-            photo_string = "PHOTO NOT FOUND"
-        
-        return f"({print_record[0]}) {photo_string} from {get_customer_name(int(print_record[2]))}"
+    customer_name = get_customer_name(int(print_record[2])) or "DELETED CUSTOMER"
+
+    return f"({print_record[0]}) {description} from {customer_name}"
 
 def get_prints_list() -> str:
     return_list = []
     for print_record in prints:
         return_list.append(get_print_info_string(print_record))
 
-    return f"{", ".join(return_list)}\n" 
+    return f"{" | ".join(return_list)}\n" 
 
 def save_prints() -> None:
     with open(prints_csv_location, "w", newline="", encoding="utf-8") as file:
@@ -90,10 +86,10 @@ def add_print(
 ) -> str:
 
     if find_photo(photo_id) is None:
-        return f"Photo {photo_id} was not found."
+        return f"❌ Photo {photo_id} was not found."
 
     if find_customer(customer_id) is None:
-        return f"Customer {customer_id} was not found."
+        return f"❌ Customer {customer_id} was not found."
 
     prints_id = None
 
@@ -128,7 +124,7 @@ def add_print(
 
     update_system(system)
 
-    return f"Print {prints_id} has been added."
+    return f"✅ Print {prints_id} has been added."
 
 def update_print(
     prints_id: int,
@@ -143,13 +139,13 @@ def update_print(
     print_record = find_print(prints_id)
 
     if print_record is None:
-        return f"Print {prints_id} was not found."
+        return f"❌ Print {prints_id} was not found."
 
     if find_photo(photo_id) is None:
-        return f"Photo {photo_id} was not found."
+        return f"❌ Photo {photo_id} was not found."
 
     if find_customer(customer_id) is None:
-        return f"Customer {customer_id} was not found."
+        return f"❌ Customer {customer_id} was not found."
 
     print_record[1] = photo_id
     print_record[2] = customer_id
@@ -160,28 +156,28 @@ def update_print(
 
     save_prints()
 
-    return f"Print {prints_id} has been updated."
+    return f"✅ Print {prints_id} has been updated."
 
 def delete_print(prints_id: int) -> str:
     print_record = find_print(prints_id)
 
     if print_record is None:
-        return f"Print {prints_id} was not found."
+        return f"❌ Print {prints_id} was not found."
 
     prints.remove(print_record)
     save_prints()
 
-    return f"Print {prints_id} has been deleted."
+    return f"✅ Print {prints_id} has been deleted."
 
 def manage_prints() -> None:
     while True:
         try:
             print(header_marker, "🖨️ Manage prints", header_marker)
-            print("1. View prints")
-            print("2. Add print")
-            print("3. Update print")
-            print("4. Delete print")
-            print("5. Return")
+            print("1. 📋 View prints")
+            print("2. 🟩 Add print")
+            print("3. 🟡 Update print")
+            print("4. 🗑️ Delete print")
+            print("5. ⏪ Return")
 
             menu = input("\nSelect a menu (1-5): ")
             print("\n")
@@ -210,8 +206,7 @@ def manage_prints() -> None:
                     else:
                         photo_description = "DELETED PHOTO"
 
-                    if len(photo_description) > 17:
-                       photo_description = photo_description[:14] + "..." 
+                    photo_description = truncate_string(photo_description, 17)
 
                     customer_name = get_customer_name(print_record[2])
                     if customer_name:
@@ -219,8 +214,7 @@ def manage_prints() -> None:
                     else:
                         customer_name = "DELETED CUSTOMER"
 
-                    if len(customer_name) > 17:
-                       customer_name = customer_name[:14] + "..." 
+                    customer_name = truncate_string(customer_name, 17)
 
                     print(
                         f"{print_record[0]:<6}"
@@ -248,7 +242,7 @@ def manage_prints() -> None:
                     if photo_id.isdigit() and find_photo(int(photo_id)) is not None:
                         break
                     else:
-                        print("Photo not found. Please enter an existing photo ID.\n")
+                        print("❌ Photo not found.\n")
 
                 # Validate customer ID
                 while True:
@@ -259,25 +253,40 @@ def manage_prints() -> None:
                     if customer_id.isdigit() and find_customer(int(customer_id)) is not None:
                         break
                     else:
-                        print("Customer not found. Please enter an existing customer ID.\n")
+                        print("❌ Customer not found.\n")
 
                 # Validate paper size
                 while True:
-                    paper_size = input("Paper size (A3/A4/4x6/2x3): ").upper()
+                    print("\nPaper size:")
+                    for i, size in enumerate(paper_sizes, start=1):
+                        print(f"({i}) {size}", end=" | ")
 
-                    if paper_size in ["A3", "A4", "4X6", "2X3"]:
+                    print("\n")
+                    paper_size = input("Paper size (Enter number): ")
+
+                    if paper_size.isdigit() and 1 <= int(paper_size) <= len(paper_sizes):
                         break
                     else:
-                        print("Invalid paper size.\n")
+                        print("❌ Invalid paper size.\n")
+
+                paper_size = paper_sizes[int(paper_size) - 1]
 
                 # Validate paper type
                 while True:
-                    paper_type = input("Paper type (Matte/Satin): ").capitalize()
-
-                    if paper_type in ["Matte", "Satin"]:
+                    print("\nPaper type:")
+                
+                    for i, paper in enumerate(paper_types, start=1):
+                        print(f"({i}) {paper}", end=" | ")
+                
+                    print("\n")
+                    paper_type = input("Paper type (Enter number): ")
+                
+                    if paper_type.isdigit() and 1 <= int(paper_type) <= len(paper_types):
                         break
                     else:
-                        print("Invalid paper type.\n")
+                        print("❌ Invalid paper type.\n")
+                
+                paper_type = paper_types[int(paper_type) - 1]
 
                 # Validate amount
                 while True:
@@ -286,7 +295,7 @@ def manage_prints() -> None:
                     if amount.isdigit() and int(amount) > 0:
                         break
                     else:
-                        print("Amount must be a positive number.\n")
+                        print("❌ Amount must be a positive number.\n")
 
                 todays_date = date.today().isoformat()
                 print_date = input(f"Print date [{todays_date}]: ") or todays_date 
@@ -300,7 +309,7 @@ def manage_prints() -> None:
                     print_date
                 )
 
-                print(result)
+                print(f"\n{result}")
                 clear_console()
 
             # UPDATE PRINT
@@ -318,7 +327,7 @@ def manage_prints() -> None:
                     if prints_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.\n")
+                        print("❌ The ID must be a number.\n")
 
                 print_record = find_print(int(prints_id))
 
@@ -336,39 +345,66 @@ def manage_prints() -> None:
 
                     # Validate photo ID
                     while True:
+                        print("\nPhotos:")
+                        print(get_photos_list())
                         new_photo_id = input(f"Update photo ID [{old_photo_id}]: ") or str(old_photo_id)
 
                         if new_photo_id.isdigit() and find_photo(int(new_photo_id)) is not None:
                             break
                         else:
-                            print("Photo not found. Please enter an existing photo ID.\n")
+                            print("❌ Photo not found.\n")
 
                     # Validate customer ID
                     while True:
+                        print("\nCustomers:")
+                        print(get_customers_list())
                         new_customer_id = input(f"Update customer ID [{old_customer_id}]: ") or str(old_customer_id)
 
                         if new_customer_id.isdigit() and find_customer(int(new_customer_id)) is not None:
                             break
                         else:
-                            print("Customer not found. Please enter an existing customer ID.\n")
+                            print("❌ Customer not found.\n")
 
                     # Validate paper size
                     while True:
-                        new_paper_size = input(f"Update paper size [{old_paper_size}]: ").upper() or old_paper_size
-
-                        if new_paper_size in ["A3", "A4", "4X6", "2X3"]:
+                        print(f"\nPaper size [{old_paper_size}]:")
+                    
+                        for i, size in enumerate(paper_sizes, start=1):
+                            print(f"({i}) {size}", end=" | ")
+                    
+                        print("\n")
+                        new_paper_size = input(f"Update paper size [{old_paper_size}]: ")
+                    
+                        if not new_paper_size:
+                            new_paper_size = old_paper_size
+                            break
+                    
+                        if new_paper_size.isdigit() and 1 <= int(new_paper_size) <= len(paper_sizes):
+                            new_paper_size = paper_sizes[int(new_paper_size) - 1]
                             break
                         else:
-                            print("Invalid paper size.\n")
-
+                            print("❌ Invalid paper size.\n")
+                    
+                    
                     # Validate paper type
                     while True:
-                        new_paper_type = input(f"Update paper type [{old_paper_type}]: ").capitalize() or old_paper_type
-
-                        if new_paper_type in ["Matte", "Satin"]:
+                        print(f"\nPaper type (Current: {old_paper_type}):")
+                    
+                        for i, paper in enumerate(paper_types, start=1):
+                            print(f"({i}) {paper}", end=" | ")
+                    
+                        print("\n")
+                        new_paper_type = input(f"Update paper type [{old_paper_type}]: ")
+                    
+                        if not new_paper_type:
+                            new_paper_type = old_paper_type
+                            break
+                    
+                        if new_paper_type.isdigit() and 1 <= int(new_paper_type) <= len(paper_types):
+                            new_paper_type = paper_types[int(new_paper_type) - 1]
                             break
                         else:
-                            print("Invalid paper type.\n")
+                            print("❌ Invalid paper type.\n")
 
                     # Validate amount
                     while True:
@@ -377,7 +413,7 @@ def manage_prints() -> None:
                         if new_amount.isdigit() and int(new_amount) > 0:
                             break
                         else:
-                            print("Amount must be a positive number.\n")
+                            print("❌ Amount must be a positive number.\n")
 
                     new_date = input(f"Update print date [{old_date}]: ") or str(old_date)
 
@@ -385,13 +421,13 @@ def manage_prints() -> None:
                         int(prints_id),
                         int(new_photo_id),
                         int(new_customer_id),
-                        new_paper_size,
-                        new_paper_type,
+                        str(new_paper_size),
+                        str(new_paper_type),
                         int(new_amount),
                         new_date
                     )
 
-                    print(result)
+                    print(f"\n{result}")
                     clear_console()
 
             # DELETE PRINT
@@ -409,11 +445,11 @@ def manage_prints() -> None:
                     if prints_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.\n")
+                        print("❌ The ID must be a number.\n")
 
                 result = delete_print(int(prints_id))
 
-                print(result)
+                print(f"\n{result}")
                 clear_console()
 
             # RETURN
@@ -423,7 +459,7 @@ def manage_prints() -> None:
 
             # INVALID MENU
             else:
-                print("Invalid menu!")
+                print("❌ Invalid menu!")
                 clear_console()
         
         except KeyboardInterrupt:

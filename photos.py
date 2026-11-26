@@ -3,7 +3,7 @@ from datetime import date
 from typing import Tuple
 
 from constants import header_marker, system_csv_location, photos_csv_location
-from utils import clear_console
+from utils import clear_console, truncate_string
 
 from data_system import update_system, update_system_from_csv
 
@@ -51,7 +51,9 @@ def get_photos_list() -> str:
         photo_string = f"({photo[0]}) {description}"
         return_list.append(photo_string)
 
-    return f"{", ".join(return_list)}\n" 
+    return f"{" | ".join(return_list)}\n"
+
+### CRUD FUNCTIONS ###
 
 def add_photo(width: int, height: int, photo_url: str, description: str, added_date: str) -> str:
     # Get the next available photo ID
@@ -87,7 +89,7 @@ def update_photo(photo_id: int, width: int, height: int, photo_url: str, added_d
     photo = find_photo(photo_id)
 
     if photo is None:
-        return f"Photo {photo_id} was not found."
+        return f"❌ Photo {photo_id} was not found."
 
     photo[1] = width
     photo[2] = height
@@ -96,7 +98,7 @@ def update_photo(photo_id: int, width: int, height: int, photo_url: str, added_d
 
     save_photos()
 
-    return f"Photo {photo_id} has been updated."
+    return f"✅ Photo {photo_id} has been updated."
 
 def save_photos() -> None:
     with open(photos_csv_location, "w", newline="", encoding="utf-8") as file:
@@ -109,23 +111,23 @@ def delete_photo(photo_id: int) -> str:
     photo = find_photo(photo_id)
 
     if photo is None:
-        return f"Photo {photo_id} was not found."
+        return f"❌ Photo {photo_id} was not found."
 
     photos.remove(photo)
 
     save_photos()
 
-    return f"Photo {photo_id} has been deleted."
+    return f"✅ Photo {photo_id} has been deleted."
 
 def manage_photos() -> None:
     while True:
         try:
             print(header_marker, "🏞️ Manage photos", header_marker)
-            print("1. View photos")
-            print("2. Add photo")
-            print("3. Update photo")
-            print("4. Delete photo")
-            print("5. Return")
+            print("1. 📋 View photos")
+            print("2. 🟩 Add photo")
+            print("3. 🟡 Update photo")
+            print("4. 🗑️ Delete photo")
+            print("5. ⏪ Return")
 
             menu = input("\nSelect a menu (1-5): ")
             print("\n")
@@ -145,9 +147,7 @@ def manage_photos() -> None:
 
                 for photo in photos:
                     description = photo[4]
-
-                    if len(description) > 17:
-                        description = description[:14] + "..."
+                    description = truncate_string(description, 17)
 
                     if not description.strip():
                         description = "-"
@@ -174,7 +174,7 @@ def manage_photos() -> None:
                     if width.isdigit() and int(width) > 0:
                         break
                     else:
-                        print("Width must be a positive number.\n")
+                        print("❌ Width must be a positive number.\n")
 
                 while True:
                     height = input("Photo height: ")
@@ -182,7 +182,7 @@ def manage_photos() -> None:
                     if height.isdigit() and int(height) > 0:
                         break
                     else:
-                        print("Height must be a positive number.\n")
+                        print("❌ Height must be a positive number.\n")
 
                 photo_url = input("Photo URL: ")
                 photo_description = input("Photo description: ")
@@ -210,7 +210,7 @@ def manage_photos() -> None:
                     if photo_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.\n")
+                        print("❌ The ID must be a number.\n")
 
                 photo = find_photo(int(photo_id))
 
@@ -229,7 +229,7 @@ def manage_photos() -> None:
                         if new_width.isdigit() and int(new_width) > 0:
                             break
                         else:
-                            print("Width must be a positive number.\n")
+                            print("❌ Width must be a positive number.\n")
 
                     while True:
                         new_height = input(f"Update height [{old_height}]: ") or str(old_height)
@@ -237,7 +237,7 @@ def manage_photos() -> None:
                         if new_height.isdigit() and int(new_height) > 0:
                             break
                         else:
-                            print("Height must be a positive number.\n")
+                            print("❌ Height must be a positive number.\n")
 
                     new_url = input(f"Update URL [{old_url}]: ") or old_url
                     new_date = input(f"Update date [{old_date}]: ") or str(old_date)
@@ -268,7 +268,7 @@ def manage_photos() -> None:
                     if photo_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.\n")
+                        print("❌ The ID must be a number.\n")
 
                 result = delete_photo(int(photo_id))
                 print(f"\n{result}")
@@ -282,7 +282,7 @@ def manage_photos() -> None:
 
             # INVALID MENU
             else:
-                print("Invalid menu!")
+                print("❌ Invalid menu!")
                 clear_console()
 
         except KeyboardInterrupt:

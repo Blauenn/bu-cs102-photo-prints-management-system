@@ -49,7 +49,7 @@ def get_customers_list() -> str:
         customer_string = f"({customer[0]}) {customer[1]}"
         return_list.append(customer_string)
 
-    return f"{", ".join(return_list)}\n" 
+    return f"{" | ".join(return_list)}\n" 
 
 ### CRUD FUNCTIONS ###
 
@@ -251,7 +251,7 @@ def manage_customers() -> None:
 
             # INVALID MENU
             else:
-                print("Invalid menu!")
+                print("❌ Invalid menu!")
                 clear_console()
                 continue
 

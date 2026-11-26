@@ -41,4 +41,4 @@ while True:
         break
 
 print("\n")
-print(header_marker, "Program exited", header_marker)
+print(header_marker, "⏏️ Program exited", header_marker, "\n")
