@@ -1,8 +1,9 @@
 import csv
+from os import truncate
 from os.path import join
 
 from constants import header_marker, system_csv_location, customers_csv_location
-from utils import clear_console
+from utils import clear_console, format_phone_number, truncate_string
 
 from data_system import update_system, update_system_from_csv
 
@@ -49,6 +50,8 @@ def get_customers_list() -> str:
         return_list.append(customer_string)
 
     return f"{", ".join(return_list)}\n" 
+
+### CRUD FUNCTIONS ###
 
 def add_customer(name: str, phone: str) -> str:
     # autoincrement value of customers
@@ -114,11 +117,11 @@ def manage_customers() -> None:
     while True:
         try:
             print(header_marker, "👤 Manage customers", header_marker)
-            print("1. View customers")
-            print("2. Add customer")
-            print("3. Update customer")
-            print("4. Delete customer")
-            print("5. Return")
+            print("1. 📋 View customers")
+            print("2. 🟩 Add customer")
+            print("3. 🟡 Update customer")
+            print("4. 🗑️ Delete customer")
+            print("5. ⏪ Return")
 
             menu = input("\nSelect a menu (1-5): ")
             print("\n")
@@ -134,13 +137,11 @@ def manage_customers() -> None:
 
                 for customer in customers:
                     customer_name = customer[1]
-
-                    if len(customer_name) > 17:
-                        customer_name = customer_name[:14] + "..."
+                    customer_name = truncate_string(customer_name, 17)
 
                     print(f"{customer[0]:<4}"
                           f"{customer_name:<20}"
-                          f"{customer[2]:<10}"
+                          f"{format_phone_number(customer[2]):<10}"
                           )
 
                 clear_console()
@@ -157,16 +158,16 @@ def manage_customers() -> None:
                     if customer_name:
                         break
                     else:
-                        print("Customer name cannot be empty.\n")
+                        print("❌ Customer name cannot be empty.\n")
                 
                 # Validate phone
                 while True:
-                    customer_phone = input("Phone number: ")
+                    customer_phone = input("Phone number: ").replace("-", "").strip()
                     
                     if len(customer_phone) == 10 and customer_phone.isdigit():
                         break
                     else:
-                        print("The phone number has be 10 digits in length.\n")
+                        print("❌ The phone number has be 10 digits in length.\n")
                         continue
 
                 result = add_customer(customer_name, customer_phone)
@@ -190,7 +191,7 @@ def manage_customers() -> None:
                     if customer_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.\n")
+                        print("❌ The ID must be a number.\n")
                         continue
 
                 customer = find_customer(int(customer_id))
@@ -199,14 +200,14 @@ def manage_customers() -> None:
                     print("\n❌ Customer not found.")
                     clear_console()
                 else:
-                    old_name = customer[1]
-                    old_phone = customer[2]
+                    old_name = str(customer[1]) 
+                    old_phone = str(customer[2]) 
 
                     new_name = input(f"Update customer name [{old_name}]: ") or old_name
 
                     # Validate phone
                     while True:
-                        new_phone = str(input(f"Update customer phone [{old_phone}]: ") or old_phone
+                        new_phone = str(input(f"Update customer phone [{format_phone_number(old_phone)}]: ").replace("-", "").strip() or old_phone
 ) 
                         if len(new_phone) == 10 and new_phone.isdigit():
                             break
@@ -235,7 +236,7 @@ def manage_customers() -> None:
                     if customer_id.isdigit():
                         break
                     else:
-                        print("The ID must be a number.\n")
+                        print("❌ The ID must be a number.\n")
                         continue
 
                 result = delete_customer(int(customer_id))
