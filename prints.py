@@ -42,10 +42,8 @@ def find_print(prints_id: int) -> list[int | str] | None:
 
     return None
 
-def get_prints_list() -> str:
-    return_list = []
-    for print_record in prints:
-        found_photo = find_photo(print_record[1])
+def get_print_info_string(print_record: list[str]) -> str:
+        found_photo = find_photo(int(print_record[1]))
 
         if found_photo:
             description = str(found_photo[4]).strip()
@@ -55,10 +53,14 @@ def get_prints_list() -> str:
             
             photo_string = description 
         else:
-            photo_string = "Photo not found."
+            photo_string = "PHOTO NOT FOUND"
+        
+        return f"({print_record[0]}) {photo_string} from {get_customer_name(int(print_record[2]))}"
 
-        prints_string = f"({print_record[0]}) {photo_string} from {get_customer_name(print_record[2])}"
-        return_list.append(prints_string)
+def get_prints_list() -> str:
+    return_list = []
+    for print_record in prints:
+        return_list.append(get_print_info_string(print_record))
 
     return f"{", ".join(return_list)}\n" 
 
@@ -305,7 +307,7 @@ def manage_prints() -> None:
             elif menu == "3":
                 clear_console(True)
                 print(header_marker, "🟡 Update print", header_marker)
-                print(f"\n{print_prints_list()}")
+                print(f"\n{get_prints_list()}")
 
                 while True:
                     prints_id = input("Select a print to update (0 to cancel): ")
@@ -396,7 +398,7 @@ def manage_prints() -> None:
             elif menu == "4":
                 clear_console(True)
                 print(header_marker, "🗑️ Delete print", header_marker)
-                print(f"\n{print_prints_list()}")
+                print(f"\n{get_prints_list()}")
 
                 while True:
                     prints_id = input("Select a print to delete (0 to cancel): ")

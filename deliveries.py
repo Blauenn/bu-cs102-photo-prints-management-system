@@ -2,15 +2,15 @@ import csv
 from datetime import date
 
 from constants import header_marker, system_csv_location, deliveries_csv_location
+from customers import get_customer_name
 from utils import clear_console
 
 from data_system import update_system, update_system_from_csv
-from prints import prints, find_print
+from prints import get_prints_list, prints, find_print
 
 # Global lists
 system = []
 deliveries = []
-
 
 def update_deliveries_from_csv() -> None:
     deliveries.clear()
@@ -28,7 +28,6 @@ def update_deliveries_from_csv() -> None:
 
         deliveries.append(delivery_to_append)
 
-
 update_system_from_csv(system)
 update_deliveries_from_csv()
 
@@ -39,6 +38,29 @@ def find_delivery(delivery_id: int) -> list[int | str] | None:
 
     return None
 
+def get_deliveries_list() -> str:
+    return_list = []
+    for delivery in deliveries:
+        found_print = find_print(delivery[1])
+
+        if found_print:
+            print_amount = found_print[5]
+            print_size = found_print[3]
+            customer_name = str(get_customer_name(int(found_print[2]))) 
+
+            if not customer_name.strip():
+                customer_name = "DELETED CUSTOMER"
+
+            print_string = f"({delivery[0]}) {print_amount} {print_size} for {customer_name}"
+
+            if len(print_string) > 30:
+                print_string = print_string[:26] + "..."
+        else:
+            print_string = f"({delivery[0]}) PRINT DELETED"
+
+        return_list.append(print_string)
+
+    return f"{", ".join(return_list)}\n" 
 
 def save_deliveries() -> None:
     with open(deliveries_csv_location, "w", newline="", encoding="utf-8") as file:
@@ -133,133 +155,179 @@ def delete_delivery(delivery_id: int) -> str:
 
 def manage_deliveries() -> None:
     while True:
-        print(header_marker, "🚚 Manage deliveries", header_marker)
-        print("1. View deliveries")
-        print("2. Add delivery")
-        print("3. Update delivery")
-        print("4. Delete delivery")
-        print("5. Return")
+        try:
+            print(header_marker, "🚚 Manage deliveries", header_marker)
+            print("1. View deliveries")
+            print("2. Add delivery")
+            print("3. Update delivery")
+            print("4. Delete delivery")
+            print("5. Return")
 
-        menu = input("\nSelect a menu (1-5): ")
-        print("\n")
+            menu = input("\nSelect a menu (1-5): ")
+            print("\n")
 
-        # VIEW DELIVERIES
-        if menu == "1":
-            print(header_marker, "📋 Deliveries list", header_marker)
-            print(
-                f"{'ID':<6}{'Print':<8}{'Created':<15}"
-                f"{'Delivered':<15}{'Status'}"
-            )
-
-            for delivery in deliveries:
-                status = "Delivered" if delivery[3] else "Pending"
-
+            # VIEW DELIVERIES
+            if menu == "1":
+                print(header_marker, "📋 Deliveries list", header_marker)
                 print(
-                    f"{delivery[0]:<6}{delivery[1]:<8}"
-                    f"{delivery[2]:<15}{delivery[3]:<15}"
-                    f"{status}"
+                    f"{'ID':<6}"
+                    f"{'Print':<26}"
+                    f"{'Created':<15}"
+                    f"{'Delivered':<15}"
+                    f"{'Status'}"
                 )
 
-            clear_console()
+                for delivery in deliveries:
+                    found_print = find_print(delivery[1])
 
-        # ADD DELIVERY
-        elif menu == "2":
-            print(header_marker, "🟩 Add delivery", header_marker)
+                    if found_print:
+                        customer_name = get_customer_name(int(found_print[2])) 
+                        if customer_name is None:
+                            customer_name = "DELETED CUSTOMER"
 
-            while True:
-                print_id = input("Print ID: ")
+                        print_description = f"{found_print[5]} {found_print[3]} for {customer_name}"
+                    else:
+                        print_description = "DELETED PRINT"
 
-                if print_id.isdigit() and find_print(int(print_id)) is not None:
-                    break
-                else:
-                    print("Print not found. Enter an existing print ID.")
+                    if len(print_description) > 20:
+                        print_description = print_description[:20] + "..."
 
-            date_created = input("Date created (YYYY-MM-DD): ") or date.today().isoformat()
+                    if delivery[3]:
+                        delivered = delivery[3]
+                    else:
+                        delivered = "-" 
 
-            result = add_delivery(int(print_id), date_created)
+                    if delivery[3]:
+                        status = "✅ Delivered"
+                    else:
+                        status = "🚚 Pending"
 
-            print(result)
-            clear_console()
+                    print(
+                        f"{delivery[0]:<6}"
+                        f"{print_description:<26}"
+                        f"{delivery[2]:<15}"
+                        f"{delivered:<15}"
+                        f"{status}"
+                    )
 
-        # UPDATE DELIVERY
-        elif menu == "3":
-            print(header_marker, "🟡 Update delivery", header_marker)
-
-            while True:
-                delivery_id = input("Select a delivery to update: ")
-
-                if delivery_id.isdigit():
-                    break
-                else:
-                    print("The ID must be a number.")
-
-            delivery = find_delivery(int(delivery_id))
-
-            if delivery is None:
-                print("\n❌ Delivery not found.")
                 clear_console()
 
-            else:
-                old_print_id = delivery[1]
-                old_date_created = delivery[2]
-                old_date_delivered = delivery[3]
+            # ADD DELIVERY
+            elif menu == "2":
+                print(header_marker, "🟩 Add delivery", header_marker)
 
                 while True:
-                    new_print_id = input(
-                        f"Update print ID [{old_print_id}]: "
-                    ) or str(old_print_id)
+                    print("\nPrint ID:")
+                    print(get_prints_list())
+                    print_id = input("Print ID: ")
 
-                    if new_print_id.isdigit() and find_print(int(new_print_id)) is not None:
+                    if print_id.isdigit() and find_print(int(print_id)) is not None:
                         break
                     else:
-                        print("Print not found. Enter an existing print ID.")
+                        print("Print not found. Enter an existing print ID.\n")
 
-                new_date_created = input(
-                    f"Update creation date [{old_date_created}]: "
-                ) or str(old_date_created)
+                todays_date = date.today().isoformat()
+                date_created = input(f"Date created [{todays_date}]: ") or todays_date 
 
-                new_date_delivered = input(
-                    f"Update delivery date [{old_date_delivered or 'Not delivered'}] (0 to clear): "
-                )
-                
-                if new_date_delivered == "0":
-                    new_date_delivered = ""
-                elif new_date_delivered == "":
-                    new_date_delivered = str(old_date_delivered)
+                result = add_delivery(int(print_id), date_created)
 
-                result = update_delivery(
-                    int(delivery_id),
-                    int(new_print_id),
-                    new_date_created,
-                    new_date_delivered
-                )
-
-                print(result)
+                print(f"\n{result}")
                 clear_console()
 
-        # DELETE DELIVERY
-        elif menu == "4":
-            print(header_marker, "🗑️ Delete delivery", header_marker)
+            # UPDATE DELIVERY
+            elif menu == "3":
+                clear_console(True)
+                print(header_marker, "🟡 Update delivery", header_marker)
+                print(f"{get_deliveries_list()}")
 
-            while True:
-                delivery_id = input("Select a delivery to delete: ")
+                while True:
+                    delivery_id = input("Select a delivery to update: ")
 
-                if delivery_id.isdigit():
-                    break
+                    if delivery_id == "0":
+                        raise(KeyboardInterrupt)
+
+                    if delivery_id.isdigit():
+                        break
+                    else:
+                        print("The ID must be a number.")
+
+                delivery = find_delivery(int(delivery_id))
+
+                if delivery is None:
+                    print("\n❌ Delivery not found.")
+                    clear_console()
+
                 else:
-                    print("The ID must be a number.")
+                    old_print_id = delivery[1]
+                    old_date_created = delivery[2]
+                    old_date_delivered = delivery[3]
 
-            result = delete_delivery(int(delivery_id))
+                    while True:
+                        new_print_id = input(
+                            f"Update print ID [{old_print_id}]: "
+                        ) or str(old_print_id)
 
-            print(result)
-            clear_console()
+                        if new_print_id.isdigit() and find_print(int(new_print_id)) is not None:
+                            break
+                        else:
+                            print("Print not found. Enter an existing print ID.")
 
-        # RETURN
-        elif menu == "5":
+                    new_date_created = input(
+                        f"Update creation date [{old_date_created}]: "
+                    ) or str(old_date_created)
+
+                    new_date_delivered = input(
+                        f"Update delivery date [{old_date_delivered or 'Not delivered'}] (0 to clear): "
+                    )
+                    
+                    if new_date_delivered == "0":
+                        new_date_delivered = ""
+                    elif new_date_delivered == "":
+                        new_date_delivered = str(old_date_delivered)
+
+                    result = update_delivery(
+                        int(delivery_id),
+                        int(new_print_id),
+                        new_date_created,
+                        new_date_delivered
+                    )
+
+                    print(f"\n{result}")
+                    clear_console()
+
+            # DELETE DELIVERY
+            elif menu == "4":
+                clear_console(True)
+                print(header_marker, "🗑️ Delete delivery", header_marker)
+                print(f"{get_deliveries_list()}")
+
+                while True:
+                    delivery_id = input("Select a delivery to delete: ")
+
+                    if delivery_id == "0":
+                        raise(KeyboardInterrupt)
+
+                    if delivery_id.isdigit():
+                        break
+                    else:
+                        print("The ID must be a number.")
+
+                result = delete_delivery(int(delivery_id))
+
+                print(f"\n{result}")
+                clear_console()
+
+            # RETURN
+            elif menu == "5":
+                clear_console(True)
+                break
+
+            # INVALID MENU
+            else:
+                print("Invalid menu!")
+                clear_console()
+
+        except KeyboardInterrupt:
+            print("\nOperation cancelled.")
             clear_console(True)
-            break
-
-        # INVALID MENU
-        else:
-            print("Invalid menu!")
-            clear_console()
+            continue
