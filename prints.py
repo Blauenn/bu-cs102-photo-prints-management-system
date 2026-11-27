@@ -42,14 +42,16 @@ def find_print(prints_id: int) -> list[int | str] | None:
     return None
 
 def get_print_info_string(print_record: list[str]) -> str:
-    found_photo = find_photo(int(print_record[1]))
+    photo_id = print_record[1]
+    customer_id = print_record[2]
+    found_photo = find_photo(int(photo_id))
 
     if found_photo:
         description = str(found_photo[4]).strip() or "Photo"
     else:
         description = "PHOTO NOT FOUND"
 
-    customer_name = get_customer_name(int(print_record[2])) or "DELETED CUSTOMER"
+    customer_name = get_customer_name(int(customer_id)) or "DELETED CUSTOMER"
 
     return f"({print_record[0]}) {description} from {customer_name}"
 
@@ -197,7 +199,15 @@ def manage_prints() -> None:
                 )
 
                 for print_record in prints:
-                    found_photo = find_photo(print_record[1])
+                    print_id = print_record[0]
+                    photo_id = print_record[1]
+                    customer_id = print_record[2]
+                    paper_size = print_record[3]
+                    paper_type = print_record[4]
+                    print_amount = print_record[5]
+                    print_date = print_record[6]
+
+                    found_photo = find_photo(photo_id)
                     if found_photo:
                         photo_description = str(found_photo[4]) 
                         
@@ -208,7 +218,7 @@ def manage_prints() -> None:
 
                     photo_description = truncate_string(photo_description, 17)
 
-                    customer_name = get_customer_name(print_record[2])
+                    customer_name = get_customer_name(customer_id)
                     if customer_name:
                         customer_name = str(customer_name.strip())
                     else:
@@ -217,13 +227,13 @@ def manage_prints() -> None:
                     customer_name = truncate_string(customer_name, 17)
 
                     print(
-                        f"{print_record[0]:<6}"
+                        f"{print_id:<6}"
                         f"{photo_description:<20}"
                         f"{customer_name:<20}"
-                        f"{print_record[3]:<8}"
-                        f"{print_record[4]:<10}"
-                        f"{print_record[5]:<9}"
-                        f"{print_record[6]}"
+                        f"{paper_size:<8}"
+                        f"{paper_type:<10}"
+                        f"{print_amount:<9}"
+                        f"{print_date}"
                     )
 
                 clear_console()

@@ -20,10 +20,10 @@ def update_deliveries_from_csv() -> None:
 
     for row in deliveries_csv:
         delivery_to_append = [
-            int(row[0]),
-            int(row[1]),
-            row[2],
-            row[3]
+            int(row[0]),    # delivery_id
+            int(row[1]),    # prints_id
+            row[2],         # created_date
+            row[3]          # delivered_date
         ]
 
         deliveries.append(delivery_to_append)
@@ -41,7 +41,10 @@ def find_delivery(delivery_id: int) -> list[int | str] | None:
 def get_deliveries_list() -> str:
     return_list = []
     for delivery in deliveries:
-        found_print = find_print(delivery[1])
+        delivery_id = delivery[0]
+        prints_id = delivery[1]
+
+        found_print = find_print(prints_id)
 
         if found_print:
             print_amount = found_print[5]
@@ -51,10 +54,10 @@ def get_deliveries_list() -> str:
             if not customer_name.strip():
                 customer_name = "DELETED CUSTOMER"
 
-            print_string = f"({delivery[0]}) {print_amount} {print_size} for {customer_name}"
+            print_string = f"({delivery_id}) {print_amount} {print_size} for {customer_name}"
             print_string = truncate_string(print_string, 30)
         else:
-            print_string = f"({delivery[0]}) PRINT DELETED"
+            print_string = f"({delivery_id}) PRINT DELETED"
 
         return_list.append(print_string)
 
@@ -128,6 +131,7 @@ def update_delivery(
         return f"❌ Print {print_id} was not found."
 
     for other_delivery in deliveries:
+        # delivery_id + prints_id composite primary key behaviour
         if other_delivery[0] != delivery_id and other_delivery[1] == print_id:
             return f"❌ Print {print_id} already has a delivery."
 
@@ -176,34 +180,44 @@ def manage_deliveries() -> None:
                 )
 
                 for delivery in deliveries:
-                    found_print = find_print(delivery[1])
+                    delivery_id = delivery[0]
+                    prints_id = delivery[1]
+                    customer_id = delivery[2]
+                    delivery_date = delivery[3]
+
+                    found_print = find_print(prints_id)
 
                     if found_print:
+                        print_amount = found_print[5]
+                        print_size = found_print[3]
+
                         customer_name = get_customer_name(int(found_print[2])) 
                         if customer_name is None:
                             customer_name = "DELETED CUSTOMER"
 
-                        print_description = f"{found_print[5]} {found_print[3]} for {customer_name}"
+                        print_description = f"{print_amount} {print_size} for {customer_name}"
                     else:
                         print_description = "DELETED PRINT"
 
                     print_description = truncate_string(print_description, 20)
 
-                    if delivery[3]:
-                        delivered = delivery[3]
+                    # Check if there's a delivery date
+                    # If there is one, that means it is delivered
+                    if delivery_date:
+                        delivered_date = delivery_date 
                     else:
-                        delivered = "-" 
+                        delivered_date = "-" 
 
-                    if delivery[3]:
+                    if delivery_date:
                         status = "✅ Delivered"
                     else:
                         status = "🚚 Pending"
 
                     print(
-                        f"{delivery[0]:<6}"
+                        f"{delivery_id:<6}"
                         f"{print_description:<26}"
-                        f"{delivery[2]:<15}"
-                        f"{delivered:<15}"
+                        f"{customer_id:<15}"
+                        f"{delivered_date:<15}"
                         f"{status}"
                     )
 

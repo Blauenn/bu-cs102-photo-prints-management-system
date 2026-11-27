@@ -20,12 +20,12 @@ def update_photos_from_csv() -> None:
 
     for row in photos_csv:
         photo_to_append = [
-            int(row[0]),
-            int(row[1]),
-            int(row[2]),
-            row[3],
-            row[4],
-            row[5]
+            int(row[0]),    # photo_id
+            int(row[1]),    # width
+            int(row[2]),    # height
+            row[3],         # photo_url
+            row[4],         # description
+            row[5]          # date
         ]
 
         photos.append(photo_to_append)
@@ -43,12 +43,14 @@ def find_photo(photo_id: int) -> list[int | str] | None:
 def get_photos_list() -> str:
     return_list = []
     for photo in photos:
-        if photo[4] != "":
-            description = photo[4]
+        photo_id = photo[0]
+        photo_description = photo[4]
+        if photo_description != "":
+            description = photo_description 
         else:
             description = "No description"
 
-        photo_string = f"({photo[0]}) {description}"
+        photo_string = f"({photo_id}) {description}"
         return_list.append(photo_string)
 
     return f"{" | ".join(return_list)}\n"
@@ -146,19 +148,25 @@ def manage_photos() -> None:
                 )
 
                 for photo in photos:
-                    description = photo[4]
-                    description = truncate_string(description, 17)
+                    photo_id = photo[0]
+                    photo_width = photo[1]
+                    photo_height = photo[2]
+                    photo_url= photo[3]
+                    photo_description = photo[4]
+                    photo_date = photo[5]
 
-                    if not description.strip():
+                    truncated_description = truncate_string(photo_description, 17)
+
+                    if not truncated_description.strip():
                         description = "-"
 
                     print(
-                            f"{photo[0]:<6}"
-                            f"{description:<20}"
-                            f"{photo[1]:<10}"
-                            f"{photo[2]:<10}"
-                            f"{photo[5]:<15}"
-                            f"{photo[3]}"
+                            f"{photo_id:<6}"
+                            f"{truncated_description:<20}"
+                            f"{photo_width:<10}"
+                            f"{photo_height:<10}"
+                            f"{photo_date:<15}"
+                            f"{photo_url}"
                         )
 
                 clear_console()

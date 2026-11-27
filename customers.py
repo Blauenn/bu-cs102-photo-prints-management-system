@@ -19,7 +19,11 @@ def update_customers_from_csv():
         customers_csv = list(csv.reader(file))[1:]
 
     for row in customers_csv:
-        customer_to_append = [int(row[0]), row[1], row[2]]
+        customer_to_append = [
+            int(row[0]),    # customer_id
+            row[1],         # name
+            row[2]          # phone
+        ]
         customers.append(customer_to_append)
 
 update_system_from_csv(system)
@@ -46,7 +50,10 @@ def get_customer_name(customer_id: int) -> str | None:
 def get_customers_list() -> str:
     return_list = []
     for customer in customers:
-        customer_string = f"({customer[0]}) {customer[1]}"
+        customer_id = customer[0]
+        customer_name = customer[1]
+
+        customer_string = f"({customer_id}) {customer_id}"
         return_list.append(customer_string)
 
     return f"{" | ".join(return_list)}\n" 
@@ -136,12 +143,13 @@ def manage_customers() -> None:
                       )
 
                 for customer in customers:
-                    customer_name = customer[1]
-                    customer_name = truncate_string(customer_name, 17)
+                    customer_id = customer[0]
+                    customer_name = truncate_string(customer[1], 17)
+                    customer_phone = customer[2]
 
-                    print(f"{customer[0]:<4}"
+                    print(f"{customer_id:<4}"
                           f"{customer_name:<20}"
-                          f"{format_phone_number(customer[2]):<10}"
+                          f"{format_phone_number(customer_phone):<10}"
                           )
 
                 clear_console()
